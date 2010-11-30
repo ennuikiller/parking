@@ -6,6 +6,7 @@
 //  Copyright 2010 __MyCompanyName__. All rights reserved.
 //
 
+#import <YAJL/YAJL.h>
 #import "SpaceDetailsView.h"
 #import "User.h"
 #import "ModalAlert.h"
@@ -33,7 +34,7 @@ static NSString *kViewKey = @"viewKey";
 
 
 @implementation SpaceDetailsView
-
+@synthesize baseAlert;
 
 - (id)initWithStyle:(UITableViewStyle)style {
     // Override initWithStyle: if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
@@ -417,9 +418,34 @@ static NSString *kViewKey = @"viewKey";
 	
 }
 
+-(void) performDismiss {
+	[baseAlert dismissWithClickedButtonIndex:0 animated:NO];
+}
+
 -(void) push: (id) button {
 	NSLog(@"you pushed me!! with sender %@",button);
 	
+	User *user = [User sharedManager];
+	NSArray *titleComponents = [self.title componentsSeparatedByString:@"-"];
+	NSString *userName = [[titleComponents objectAtIndex:0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+	NSLog(@"got userName of %@",userName);
+	
+	NSLog(@"title prefix = @%",titleComponents);
+	
+	baseAlert = [[[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Requesting space from %@",userName] message:nil delegate:self cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+	[baseAlert show];
+	
+	UIActivityIndicatorView *aiv = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+	aiv.center = CGPointMake(baseAlert.bounds.size.width / 2.0f, baseAlert.bounds.size.height - 40.0f );
+	[aiv startAnimating];
+	[baseAlert addSubview:aiv];
+	[aiv release];
+	
+	[self performSelector:@selector(performDismiss) withObject:nil afterDelay:3.0f];
+	[self sendStompMessageTo:userName from:user.userName];
+
+	
+/*	
 	UIActionSheet *menu = [[UIActionSheet alloc]
                            initWithTitle: @"Get Space"
                            delegate:self
@@ -427,7 +453,8 @@ static NSString *kViewKey = @"viewKey";
                            destructiveButtonTitle:@"Delete File"
                            otherButtonTitles:@"Rename File", @"Email File", nil];
     //[menu showInView:self.view];
-	[menu showFromToolbar:self.navigationController.toolbar];
+*/
+ //[menu showFromToolbar:self.navigationController.toolbar];
 
 	/*
 	NSUInteger answer = [ModalAlert ask:@"Get Space?"];
@@ -473,7 +500,8 @@ static NSString *kViewKey = @"viewKey";
 	//NSLog(@"Got error: %@",err);
 	//NSLog(@"connected host = %@",[asyncSocket connectedHost]);
 	//NSLog(@"SOCKET = %@",[asyncSocket description]); 
-	NSString *message = [NSString stringWithFormat:@"<space><railsld>%@</railsid><from>%@</from></space>",device,me];
+	NSString *message = [NSString stringWithFormat:@"%@:%@",me,device];
+	
 	Stomp *stomp = [[Stomp alloc] init];
 	[stomp aMethod:message];
 	

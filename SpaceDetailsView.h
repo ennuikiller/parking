@@ -9,9 +9,10 @@
 #import <UIKit/UIKit.h>
 
 
-@interface SpaceDetailsView : UITableViewController  <UITextFieldDelegate,UIActionSheetDelegate>{
+@interface SpaceDetailsView : UITableViewController  <UITextFieldDelegate,UIActionSheetDelegate,UIAlertViewDelegate>{
+	
 
 }
-
+@property (nonatomic, retain) UIAlertView *baseAlert;
 -(void)push: (id) button;
 @end

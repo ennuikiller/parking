@@ -6,6 +6,7 @@
 //  Copyright 2010 __MyCompanyName__. All rights reserved.
 //
 
+#import <YAJL/YAJL.h>
 #import "Stomp.h"
 #import "CRVStompClient.h"
 
@@ -44,6 +45,8 @@
 	NSLog(@"gotMessage body: %@, header: %@", body, messageHeader);
 	NSLog(@"Message ID: %@", [messageHeader valueForKey:@"message-id"]);
 	// If we have successfully received the message ackknowledge it.
+	
+
 	[stompService ack: [messageHeader valueForKey:@"message-id"]];
 }
 
@@ -60,12 +63,16 @@
 {
     //NSLog(@"onSocket:%p didConnectToHost:%@ port:%hu", sock, host, port);
 	
-    for(int i=0;i<5;i++){
-        NSString* str= [NSString stringWithFormat: @"Hello Server: %@",message];
+   // for(int i=0;i<5;i++){
+        NSString* str= [NSString stringWithFormat: @"%@",message];
         NSData* data=[str dataUsingEncoding:NSUTF8StringEncoding];
+	
+	NSDictionary *dict = [NSDictionary dictionaryWithObject:message forKey:@"message"];
+	NSString *JSONString = [dict yajl_JSONString];
+
         [sock sendMessage:str toDestination:kQueueName];
 		
-    }
+   // }
 }
 
 @end

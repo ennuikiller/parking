@@ -76,7 +76,7 @@
 	//NSLog(@"Got error: %@",err);
 	//NSLog(@"connected host = %@",[asyncSocket connectedHost]);
 	//NSLog(@"SOCKET = %@",[asyncSocket description]); 
-	NSString *message = @"Hi there!!";
+	NSString *message = @"Registering for topic parking .....";
 	Stomp *stomp = [[Stomp alloc] init];
 	[stomp aMethod:message];
 		
@@ -85,12 +85,7 @@
 - (void)onSocket:(AsyncSocket *)sock didConnectToHost:(NSString *)host port:(UInt16)port
 {
     NSLog(@"onSocket:%p didConnectToHost:%@ port:%hu", sock, host, port);
+	NSLog(@"Listening for messages ...........................");
 	
-    for(int i=0;i<5;i++){
-        NSString* str= [NSString stringWithFormat: @"Hello Server: %d",i];
-        NSData* data=[str dataUsingEncoding:NSUTF8StringEncoding];
-        [sock writeData:data withTimeout:-1 tag:1];
-		
-    }
 }
 @end
