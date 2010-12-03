@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
+#import "CRVStompClient.h"
 
-@interface SpaceDetailsView : UITableViewController  <UITextFieldDelegate,UIActionSheetDelegate,UIAlertViewDelegate>{
+@interface SpaceDetailsView : UITableViewController  <UITextFieldDelegate,UIActionSheetDelegate,UIAlertViewDelegate,CRVStompClientDelegate> {
 	
 
 }

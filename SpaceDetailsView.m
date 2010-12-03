@@ -507,5 +507,14 @@ static NSString *kViewKey = @"viewKey";
 	
 }
 
+- (void)stompClient:(CRVStompClient *)stompService messageReceived:(NSString *)body withHeader:(NSDictionary *)messageHeader {
+	NSLog(@"In SpaceDetailsView, gotMessage body: %@, header: %@", body, messageHeader);
+	NSLog(@"Message ID: %@", [messageHeader valueForKey:@"message-id"]);
+	// If we have successfully received the message ackknowledge it.
+	
+	
+	[stompService ack: [messageHeader valueForKey:@"message-id"]];
+}
+	
 @end
 

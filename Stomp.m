@@ -41,9 +41,25 @@
 	NSLog(@"stompServiceDidConnect");
 }
 
+
 - (void)stompClient:(CRVStompClient *)stompService messageReceived:(NSString *)body withHeader:(NSDictionary *)messageHeader {
 	NSLog(@"gotMessage body: %@, header: %@", body, messageHeader);
 	NSLog(@"Message ID: %@", [messageHeader valueForKey:@"message-id"]);
+	
+	NSString *colon = @":";
+	if ([body isMatchedByRegex:colon]) {
+	NSArray *users = [body componentsSeparatedByString: @":"];
+	NSString *message = [NSString stringWithFormat:@"%@ Wants Your Space!",[users objectAtIndex:1]];
+	NSString *question = [NSString stringWithFormat:@"Let %@ Have It?", [users objectAtIndex:1]];
+	
+	UIAlertView *av = [[UIAlertView alloc] initWithTitle:message 
+													 message:question // IMPORTANT
+													delegate:nil 
+										   cancelButtonTitle:nil 
+										   otherButtonTitles:@"Enter", nil];
+	[av show];
+	[av release];
+	}
 	// If we have successfully received the message ackknowledge it.
 	
 
