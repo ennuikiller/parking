@@ -1137,8 +1137,10 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 		//[_responseData appendData:data];
 	//NSLog(@"response data is: %@",_responseData);
 	NSString *sdata = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
+	NSLog(@"data recieved is: [%@]",sdata);
 	NSString *regexString = @"<id type=\"integer\">(\\d+)</id>";
-	if([sdata isMatchedByRegex:regexString]) {
+	NSString *regexDevToken = @"deviceToken";
+	if([sdata isMatchedByRegex:regexString] && ! [sdata isMatchedByRegex:regexDevToken]) {
 		int intId = [[sdata stringByMatching:regexString capture:1L] intValue];					  
 		NSLog(@"intId = %d",intId);
 		NSString *put_url = [[NSString alloc] initWithFormat:@"http://74.72.89.23:3000/locations/%d.xml",intId];
@@ -1255,7 +1257,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 -(void)registerDeviceWithParkingServer: (NSNotification *)notification {
 
 
-		
+
 	
 	NSString *URLstr = DEVICES_URL;
 	NSURL *theURL = [NSURL URLWithString:URLstr];
