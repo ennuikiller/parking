@@ -133,7 +133,14 @@
 }
 
 - (void)sendMessage:(NSString *)theMessage toDestination:(NSString *)destination {
-	NSDictionary *headers = [NSDictionary dictionaryWithObjectsAndKeys: destination, @"destination", nil];
+	long long int CurrentTime = (long long int)[[NSDate date] timeIntervalSince1970];
+	long long int expiration = 30*1000*CurrentTime;
+	
+	NSLog(@"Got time of %lli in aMethod",expiration);
+	NSString *expirationTime = [NSString stringWithFormat:@"%lli",expiration];
+	
+	
+	NSDictionary *headers = [NSDictionary dictionaryWithObjectsAndKeys: destination, @"destination", expirationTime, @"JMSExpiration", nil];
     [self sendFrame:kCommandSend withHeader:headers andBody:theMessage];
 }
 

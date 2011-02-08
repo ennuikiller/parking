@@ -215,19 +215,23 @@
 	if ((savedCoordinate.latitude == 0) && (savedCoordinate.longitude == 0)) {
 		[self findMe];
 	} else {
-		MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(savedCoordinate, 400, 400); 
+		NSLog(@"OK WE ARE PROCESSING SAVED COORDINATES");
+		MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(savedCoordinate, 200, 200); 
 		//MKCoordinateRegion adjustedRegion = [mapView regionThatFits:viewRegion];
 		[mapView setRegion:viewRegion animated:YES];
 		//[mapView setRegion:adjustedRegion animated:YES];
 
 		
-		MKReverseGeocoder *geocoder = [[[MKReverseGeocoder alloc] initWithCoordinate:savedCoordinate] autorelease];
+		MKReverseGeocoder *geocoder = [[MKReverseGeocoder alloc] initWithCoordinate:savedCoordinate] ;
 		geocoder.delegate = self;
 		[geocoder start];
 	}
 		
 	[MapMeViewController getParkedCars:self.mapView];
 	[MapMeViewController getLocations];
+	
+	
+	
 	
 	[[NSNotificationCenter defaultCenter]
 	 addObserver:self
@@ -373,6 +377,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 #pragma mark -
 #pragma mark Reverse Geocoder Delegate Methods
 - (void)reverseGeocoder:(MKReverseGeocoder *)geocoder didFailWithError:(NSError *)error {
+	NSLog(@"WE FUCKING FAILED TO REVERSE GEOCODE!!");
 	MapLocation *annotation = [[[MapLocation alloc] init] autorelease];
 	annotation.streetNumber = @"undetermined";
     annotation.streetAddress = @"undetermined";
@@ -425,6 +430,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
     
 	//annotation.zip = placemark.postalCode;
     annotation.coordinate = geocoder.coordinate;
+	NSLog(@"CALLING SET ANOTATOION =============================================> ");
 	[self setAnnotation:annotation];
 	
 /*	
@@ -840,7 +846,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	self->sharedUser.location = [[CLLocation alloc] initWithLatitude:savedCoordinate.latitude longitude:savedCoordinate.longitude];
 
 	
-	NSLog(@"########### saved User Data %f,%f",self->sharedUser.location.coordinate.latitude, self->sharedUser.location.coordinate.longitude);
+	NSLog(@"########### GOT saved User Data %f,%f",self->sharedUser.location.coordinate.latitude, self->sharedUser.location.coordinate.longitude);
 	return savedCoordinate;
 }
 
@@ -1244,7 +1250,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	
     [mapView addAnnotation:annotationView.annotation];
 	[self removeFromMap];
-    
+    NSLog(@"Annontation Title = %@",annotation.title);
     [annotationView release];
 	
 	

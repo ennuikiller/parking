@@ -25,7 +25,6 @@
 						 delegate:self] ;
 	[s connect];
 	
-	
 	NSDictionary *headers = [NSDictionary dictionaryWithObjectsAndKeys: 	
 							 @"client", @"ack", 
 							 @"true", @"activemq.dispatchAsync",
