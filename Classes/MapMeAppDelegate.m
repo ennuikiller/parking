@@ -2,8 +2,8 @@
 //  MapMeAppDelegate.m
 //  MapMe
 //
-//  Created by jeff on 11/9/09.
-//  Copyright Jeff LaMarche 2009. All rights reserved.
+//  Created by Steven Hirsch on 11/9/09.
+//  Copyright __MyCompanyName__. All rights reserved.
 //
 
 #import "MapMeAppDelegate.h"
@@ -21,11 +21,8 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions { 
-	User *user = [User sharedManager];
-	NSLog(@"calling  sendStompMessage!");
-	NSString *message = @"from app delegate";
+	
 	[self sendStompMessage];
-	NSLog(@"calling registerForRemoteNotification");
 	[[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
 		
     NSHost *host;
@@ -56,10 +53,7 @@
 	user.devToken = deviceToken;
 	NSLog(@"User device toekn: %@",user.devToken);
 	
-	[[NSNotificationCenter defaultCenter] 
-	 postNotificationName:@"RemoteNotificationsDONE"
-	 object:self];
-	
+		
 }
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {

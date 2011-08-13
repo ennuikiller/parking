@@ -2,8 +2,8 @@
 //  ParkingSpots.h
 //  MapMe
 //
-//  Created by Susan Hirsch on 1/30/10.
-//  Copyright 2010 Apple Inc. All rights reserved.
+//  Created by Steven Hirsch on 1/30/10.
+//  Copyright __MyCompanyName__. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

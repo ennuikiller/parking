@@ -23,10 +23,6 @@
 
 
 const NSInteger skViewTag = 1;
-static NSString *kSectionTitleKey = @"sectionTitleKey";
-static NSString *kSourceKey = @"sourceKey";
-static NSString *kViewKey = @"viewKey";
-
 
 @implementation Settings
 
@@ -60,11 +56,8 @@ static NSString *kViewKey = @"viewKey";
 	NSDictionary *savedCarInfo = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"CarInfo"];
 	NSArray *savedCarArray = [[NSUserDefaults standardUserDefaults] arrayForKey:@"CarArray"];
 	NSLog(@"savedCarArray count = %d",[savedCarArray count]);
-	
-	
-		
 
-	
+		
 	if ([savedCarInfo count] == 0) {
 		self.carInfo = [[NSMutableDictionary alloc] initWithCapacity:0];
 	} else {
@@ -77,12 +70,7 @@ static NSString *kViewKey = @"viewKey";
 		self.carArray = [[NSMutableArray alloc] initWithArray:savedCarArray];
 	}
 	
-	//for (NSDictionary *dictEntry in savedCarInfo) {
-	//	if (![carArray containsObject:dictEntry]) {
-	//		[carArray addObject:dictEntry];
-	//	}
-	//}
-	// this will appear as the title in the navigation bar
+    // this will appear as the title in the navigation bar
 	CGRect frame = CGRectMake(0, 0, 400, 44);
 	UILabel *label = [[[UILabel alloc] initWithFrame:frame] autorelease];
 	label.backgroundColor = [UIColor clearColor];
@@ -143,9 +131,6 @@ static NSString *kViewKey = @"viewKey";
 #pragma mark Table view methods
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	//NSLog(@"called number of sections in tableview");
-	//NSLog(@"number of sections = %d",(4 + [carInfo count]));
-	//NSLog(@"number of real aections = %d",[tableView numberOfSections]);
 	NSLog(@"called number of sections, cararray count = %d",[carArray count]);
     return (4 + [self.carArray count]);
 }
@@ -155,8 +140,7 @@ static NSString *kViewKey = @"viewKey";
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	NSLog(@"called number of rows in section #%d",section);
 	int sectionNotThere = self.sectionDeleted;
-	//NSLog(@"section Not There = %d",sectionNotThere);
-	//NSLog(@"section deleted after setting to section not there = %d",self.sectionDeleted);
+	
 	if ((self.didDeleteSection == YES) && (section == ([carArray count] + 4))) {
 		self.didDeleteSection == NO;
 		return 0;
@@ -242,36 +226,24 @@ static NSString *kViewKey = @"viewKey";
 		  switch (indexPath.section) {
 			case 0:
 				  textFieldLeftView.placeholder = nil;
-				 // NSLog(@"parent controller = %@",self.parentViewController);
-				  //textFieldLeftView.placeholder = @"address shopuld get filled in";
-				 // NSLog(@"IN CASE STATEMENT, for section %d, row = %d",indexPath.section,indexPath.row);
-				  //NSLog(@"showing selectedStreetAddress for user = %@",user.userName);
-				  textFieldLeftView.text = user.address;
+                  textFieldLeftView.text = user.address;
 				  textFieldLeftView.enabled = NO; 
 				break;
 			case 1:
-				  //NSLog(@"IN CASE STATEMENT, for section %d, row = %d",indexPath.section,indexPath.row);
-				textFieldLeftView.placeholder = @"north, south, east, or west";
+                  textFieldLeftView.placeholder = @"north, south, east, or west";
 				  break;
 			  case 2:
-				  //NSLog(@"IN CASE STATEMENT, for section %d, row = %d",indexPath.section,indexPath.row);
 				  textFieldLeftView.placeholder = @"buildings, parks, hotels, etc";
 				  break;
 			  case 3:
-				  //NSLog(@"IN CASE STATEMENT, for section %d, row = %d",indexPath.section,indexPath.row);
 				  textFieldLeftView.placeholder = @"car information";
 				  break;
-				  
 			default:
-				  //NSLog(@"IN CASE STATEMENT, for section %d, row = %d",indexPath.section,indexPath.row);
-
-				  //NSLog(@"called default in viewforcell");
 				  textFieldLeftView.placeholder = @"car information";
-				break;
+                  break;
 		}
 
-		//textFieldLeftView.placeholder = @"north, south, east, or west";
-		//textFieldLeftView.backgroundColor = [UIColor whiteColor];
+		
 		
 		textFieldLeftView.keyboardType = UIKeyboardTypeDefault;
 		textFieldLeftView.returnKeyType = UIReturnKeyDone;	
@@ -292,12 +264,10 @@ static NSString *kViewKey = @"viewKey";
 	{
 		[cell.contentView removeFromSuperview];
 		cell.textLabel.text = nil;
-		
 
 		static NSString *kWhiteCell_ID = @"WhiteCell_ID";
-		//static NSString *kCellTextField_ID = @"CellTextField_ID";
-
 		cell = [tableView dequeueReusableCellWithIdentifier:kWhiteCell_ID];
+        
 		if (cell == nil)
 		{
 			cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:kWhiteCell_ID] autorelease];
@@ -319,17 +289,13 @@ static NSString *kViewKey = @"viewKey";
 		if (cell == nil)
 		{
 			cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:kSourceCell_ID] autorelease];
-			//cell.selectionStyle = UITableViewCellSelectionStyleNone;
-			//cell.contentView.backgroundColor = [UIColor redColor];
 			cell.textLabel.font = [UIFont systemFontOfSize:28];
 			cell.textLabel.text = @"Delete";
 			cell.textLabel.backgroundColor = [UIColor redColor];
 			//cell.contentView.clipsToBounds = YES;
 			cell.backgroundColor = [UIColor redColor];
 			cell.textLabel.textAlignment = UITextAlignmentCenter;
-		}
-		//cell.textLabel.text = nil;
-		
+		}		
 	}
 			
 	
@@ -338,15 +304,13 @@ static NSString *kViewKey = @"viewKey";
 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-	NSLog(@"IN DIDSELECTROWATINDEXPATH......................................................row = %d,section = %d",indexPath.row,indexPath.section);
+	NSLog(@"IN %s......................................................row = %d,section = %d",__FUNCTION__,indexPath.row,indexPath.section);
 	if ((indexPath.section >= 4) && (indexPath.row == 4)) {
 		self.didDeleteSection = YES;
 		NSInteger carNumber = indexPath.section - 3;
-		//NSLog(@"carInfo.count = %d", [carInfo count]);
 		NSString *dictKey = [NSString stringWithFormat:@"car%d",carNumber];
 		NSLog(@"COUNT OF CARINO BEFORE REMOVAL = %d",[carInfo count]);
 		NSLog(@"COUNT OF CARARRAY BEFORE REMOVAL = %d",[carArray count]);
-
 
 		[carInfo removeObjectForKey:dictKey];
 		[carArray removeObjectAtIndex:(indexPath.section - 4)];
@@ -376,10 +340,6 @@ static NSString *kViewKey = @"viewKey";
 		NSLog(@"I DONT HINK WE SHOULD BE HERE...................");
 	}
 		
-    // Navigation logic may go here. Create and push another view controller.
-	// AnotherViewController *anotherViewController = [[AnotherViewController alloc] initWithNibName:@"AnotherView" bundle:nil];
-	// [self.navigationController pushViewController:anotherViewController];
-	// [anotherViewController release];
 }
 
 
@@ -407,15 +367,7 @@ static NSString *kViewKey = @"viewKey";
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-	//if ((indexPath.section == 0) || (indexPath.section ==2) || (indexPath.section == 3) || (indexPath.section ==4)) return 40.0f;
-	//if (indexPath.section == 1)
-	//{
-	//	if (indexPath.row == 0) return 40.0f;
-	//	if (indexPath.row == 1) return 40.0f;
-	//}
-	
-	//return 0.0f;
-	return 40.0f;
+		return 40.0f;
 }
 
 #pragma mark -
@@ -468,9 +420,7 @@ static NSString *kViewKey = @"viewKey";
 
 -(void) addSection: (UISegmentedControl *) sender {
 	sender.momentary = YES;
-	//NSLog(@"selected index = %d",sender.selectedSegmentIndex);
-	//NSLog(@"selected action = %@",[sender titleForSegmentAtIndex:sender.selectedSegmentIndex]);
-	//[self.tableView deleteSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:YES];
+
 	if (sender.selectedSegmentIndex == 1) {
 		self.addRow = 0;
 
@@ -481,21 +431,13 @@ static NSString *kViewKey = @"viewKey";
 		NSDictionary *dictEntry = [[NSDictionary alloc] initWithObjects: values forKeys:values];
 		[carInfo setObject:dictEntry forKey:dictKey];
 		NSLog(@"calling addobject to carrarray with carNumber = %d",carNumber);
-	
-	//	if (![self.carArray containsObject:dictEntry]) {
-			[self.carArray addObject:dictEntry];
-			NSLog(@"after adding object, cararray count = %d",[carArray count]);
-	//	} else {
-	//		NSLog(@"already added dictionary to array: %@",dictEntry);
-	//	}
-		
+        [self.carArray addObject:dictEntry];
+        NSLog(@"after adding object, cararray count = %d",[carArray count]);
+			
 		[[NSUserDefaults standardUserDefaults] setObject:carInfo forKey:@"CarInfo"];
-		
 		[[NSUserDefaults standardUserDefaults] setObject:carArray forKey:@"CarArray"];
 
-		
-		//[self.tableView reloadData];
-		
+				
 		if ([self.tableView numberOfRowsInSection:4] == 5) {
 			NSMutableArray *indexPaths = [NSMutableArray arrayWithCapacity:1];
 			//[self.tableView beginUpdates];
@@ -523,7 +465,6 @@ static NSString *kViewKey = @"viewKey";
 		self.addRow = 1;
 		NSString *key;
 		NSDictionary *dict;
-		//for (key in carInfo) {
 		for ( dict in carArray) {
 			sectionCount++;
 			NSIndexPath *insertDeleteButton = [NSIndexPath indexPathForRow:4 inSection:sectionCount];

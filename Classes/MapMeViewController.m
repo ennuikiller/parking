@@ -2,8 +2,8 @@
 //  MapMeViewController.m
 //  MapMe
 //
-//  Created by jeff on 11/4/09.
-//  Copyright Jeff LaMarche 2009. All rights reserved.
+//  Created by Steven Hirsch on 11/4/09.
+//  Copyright __MyCompanyName__. All rights reserved.
 //
 
 #import "MapMeViewController.h"
@@ -15,9 +15,7 @@
 #import "DDAnnotation.h"
 #import "LeftCalloutButtons.h"
 #import "UpdateLocation.h"
-#import "SpaceDetails.h"
 #import "SpaceDetailsView.h"
-#import "PreferencesViewController.h"
 #import "Settings.h"
 #import "SplashViewController.h"
 #import "RegexKitLite.h"
@@ -26,18 +24,19 @@
 
 #define LOCATIONS_URL	@"http://74.72.89.23:3000/locations.xml"
 #define DEVICES_URL	@"http://74.72.89.23:3000/devices"
-#define allTrim( object ) [object stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet] ]
-#define selectedUser( object ) [[[object title]componentsSeparatedByString:@" "] objectAtIndex:0]
 
 #define kApproxRadiusOfEarthInMiles                     3963.1676
 #define kApproxSizeOfOneDegreeLatitudeInMiles           68.71 
 #define kApproxSizeOfOneDegreeLongitudeAtLatitude(lat)  ((M_PI/180.0)* kApproxRadiusOfEarthInMiles *cos(lat))
 
+#define allTrim( object ) [object stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet] ]
+#define selectedUser( object ) [[[object title]componentsSeparatedByString:@" "] objectAtIndex:0]
 
-// static NSString *available = @"Available";
+
 
 
 @implementation MapMeViewController
+
 @synthesize mapView;
 @synthesize progressLabel;
 @synthesize button;
@@ -45,99 +44,31 @@
 @synthesize states;
 @synthesize points;
 @synthesize activityIndicator;
-
 @synthesize userNameTextField;
 @synthesize passwordTextField;
 //@synthesize availableParking;
 
 #pragma mark -
-- (IBAction)findMe {
-	
-	//self->sharedUser.status = @"A";
-	self->sharedUser.parked = NO;
-	NSLog(@"in findMe self->shared.status = %@",self->sharedUser.status);
-    lm = [[CLLocationManager alloc] init];
-    lm.delegate = self;
-    lm.desiredAccuracy = kCLLocationAccuracyBest;
-    [lm startUpdatingLocation];
-    
-	activityIndicator.hidden = NO;
-	
-	//toolBar.hidden = YES;
-	//activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-	activityIndicator.hidesWhenStopped = YES;
-	[activityIndicator startAnimating];
-	[self.view addSubview:activityIndicator];
-    
-    progressLabel.text = NSLocalizedString(@"Determining Current Location", @"Determining Current Location");
-    
-    button.hidden = YES;
-	self->sharedUser.findMeCalled = YES;
-}
-
-- (void)openCallout:(id<MKAnnotation>)annotation {
-	
-	NSLog(@"##################################### in openCallOut");
-	NSLog(@"did request location refresh = %d",self->sharedUser.didRequestRefresh);
-	
-	[activityIndicator stopAnimating];
-	
-	/*
-	if (self->sharedUser.findMeCalled == YES) {
-		self->sharedUser.findMeCalled = NO;
-		progressLabel.text= [annotation subtitle];
-		self->sharedUser.title = progressLabel.text;
-	} else {
-		progressLabel.text = self->sharedUser.title;
-	}
-	*/
-	progressLabel.text = [annotation subtitle];
-	if (!(self->sharedUser.userName == nil))  {
-	if ([[annotation title] hasPrefix:self->sharedUser.userName]) {
-		self->sharedUser.selectedStreetAddress = [annotation subtitle];
-		self->sharedUser.address = [annotation subtitle];
-	}
-	}
-	
-	UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 20)];
-	//[label setFont:[UIFont boldSystemFontOfSize:16.0]];
-	[label setFont:[UIFont fontWithName:@"HiraKakuProN-W6" size:12]];
-	[label setBackgroundColor:[UIColor clearColor]];
-	[label setTextColor:[UIColor whiteColor]];
-	[label setText:[annotation subtitle]];
-	[label setTextAlignment:UITextAlignmentCenter];
-	[self.navigationController.navigationBar.topItem setTitleView:label];
-	[label release];
-	
-	//self.title = [annotation subtitle];
-	toolBar.translucent = YES;
-	toolBar.hidden = NO;
-	//progressLabel.text = NSLocalizedString(@"Showing Annotation",@"Showing Annotation");
-    [mapView selectAnnotation:annotation animated:YES];
-	if (self->sharedUser.didRequestRefresh == YES)
-		self->sharedUser.didRequestRefresh = NO;
-
-}
 
 #pragma mark -
 - (void)viewDidLoad {
 	
+    
+    
 	SplashViewController *splashScreen = [[[SplashViewController alloc]    
 										  initWithNibName:@"SplashViewController" bundle:nil] autorelease];
 	[self presentModalViewController:splashScreen animated:NO];
-	[[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
 
 	
-	// connect to facebook and get a session
-	
+	// We use the self->sharedUser method to access the singleton so we only have to call [User sharedManager] once
 	self->sharedUser = [User sharedManager];
 	self->sharedUser.controller = self;
 	self->sharedUser.didRequestRefresh = NO;
 	self->sharedUser.didRequestParkingRefresh = NO;
-
 	self->sharedUser.parked = NO;
 	self->sharedUser.callOutViewTapped = 0;
 	self->sharedUser.status = @"A";
+    
     mapView.mapType = MKMapTypeStandard;
 	
 	activityIndicator.hidden = YES;
@@ -170,58 +101,32 @@
 	
 	NSLog(@"udid = %@",self->sharedUser.udid);
 	NSLog(@"deviceToken = %@",self->sharedUser.devToken);
-	/*
-	// refactor into method
-	NSData *deviceData = [[NSString stringWithFormat:@"<device><deviceID>%@</deviceID><deviceToken>%@</deviceToken></device>", 
-							   self->sharedUser.udid,self->sharedUser.devToken] dataUsingEncoding:NSASCIIStringEncoding];
-	
-	NSString *URLstr = DEVICES_URL;
-	NSURL *theURL = [NSURL URLWithString:URLstr];
-	NSMutableURLRequest *theRequest = [NSMutableURLRequest requestWithURL:theURL cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10.0];
-	[theRequest setHTTPMethod:@"POST"];
-	
-	[theRequest setValue:@"text/xml" forHTTPHeaderField:@"Content-type"];
-	[theRequest setHTTPBody:deviceData];
-	
-	NSURLConnection *theConnection = [[NSURLConnection alloc] initWithRequest:theRequest delegate:self];
-	
-	if (!theConnection) {
-		NSLog(@"COuldn't register device information with Parking Server");
-	} else {
-		NSLog(@"####################### UPDATED DEVICE TABLE: setting NSUserDefaults, devToken - %@, devID - %@", self->sharedUser.devToken, self->sharedUser.udid);
-		[[NSUserDefaults standardUserDefaults] setObject:self->sharedUser.devToken forKey:@"devToken"];
-		[[NSUserDefaults standardUserDefaults] setObject:self->sharedUser.udid forKey:@"devID"];
+    
+    self->sharedUser.userName =  [[NSUserDefaults standardUserDefaults] stringForKey:@"Username"];
 		
-		
-	}
-	
-
-
-	
-	
-	
-	
-	 // refactor into method
-	*/
-	 self->sharedUser.userName =  [[NSUserDefaults standardUserDefaults] stringForKey:@"Username"];
-	NSLog(@"######### MapMeViewController viewDidAppear: User.userName = %@",self->sharedUser.userName);
-		
-
+    // promptForUsernamePassword will return immediately if not nil username
 	[self promptForUsernamePassword];
-	NSLog(@"before call to existsInDatabase userName = %@",self->sharedUser.userName);
+    
+	// we call the next method to determine if we are updating an existing record or inserting a new one (put or post request)
 	[self userExistsInDatabase];
+    
+    // restore user's last location
 	CLLocationCoordinate2D savedCoordinate =  [self getSavedLocation];
 	
+    // needed to test on simulator
+    savedCoordinate.latitude = 40.720221;
+    savedCoordinate.longitude = -73.84535200000001;
+    // needed to ttest on simulator
+    
+    
 	if ((savedCoordinate.latitude == 0) && (savedCoordinate.longitude == 0)) {
 		[self findMe];
 	} else {
-		NSLog(@"OK WE ARE PROCESSING SAVED COORDINATES");
+		NSLog(@"Loaded SAVED COORDINATES");
 		MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(savedCoordinate, 200, 200); 
-		//MKCoordinateRegion adjustedRegion = [mapView regionThatFits:viewRegion];
 		[mapView setRegion:viewRegion animated:YES];
-		//[mapView setRegion:adjustedRegion animated:YES];
-
 		
+        // Find location based on coordinates
 		MKReverseGeocoder *geocoder = [[MKReverseGeocoder alloc] initWithCoordinate:savedCoordinate] ;
 		geocoder.delegate = self;
 		[geocoder start];
@@ -231,39 +136,29 @@
 	[MapMeViewController getLocations];
 	
 	
-	
-	
+	// Notify when finished loading parking data from database
 	[[NSNotificationCenter defaultCenter]
 	 addObserver:self
 	 selector:@selector(getAvailableParking)
 	 name:@"XMLDone"
 	 object:nil]; 
 	
+    // Notify when user has changed location
 	[[NSNotificationCenter defaultCenter]
 	 addObserver:self
 	 selector:@selector(recordCurrentLocation:)
 	 name:@"DDAnnotationCoordinateDidChangeNotification"
 	 object:nil]; 
 	
+    // Notify when the database has been updated
 	[[NSNotificationCenter defaultCenter] 
 	 addObserver:self 
 	 selector:@selector(didCompleteUpdate:) 
 	 name:@"didCompleteUpdateNotification" object:nil];
 	
-
-	[[NSNotificationCenter defaultCenter] 
-	 addObserver:self 
-	 selector:@selector(registerDeviceWithParkingServer:) 
-	 name:@"RemoteNotificationsDONE" object:nil];
-	
-	
-	
+    // OK, parking spaces have been downloaded and annotized, so we're ready to present the map!
 	[self dismissModalViewControllerAnimated:YES];
 
-	
-//    mapView.mapType = MKMapTypeSatellite;
-//    mapView.mapType = MKMapTypeHybrid;
-	//self.availableParking = [[NSMutableArray alloc] init];
 
 }
 
@@ -312,15 +207,10 @@
     progressLabel.text = NSLocalizedString(@"Finding location......", @"Finding locations.....");
     
     MKReverseGeocoder *geocoder = [[MKReverseGeocoder alloc] initWithCoordinate:newLocation.coordinate];
-	//self->sharedUser.currentLocation.coordinate = newLocation.coordinate;
-	//MapLocation *currentLocation = [[MapLocation alloc] init];
-	//currentLocation.coordinate = newLocation.coordinate;
-	//[[NSNotificationCenter defaultCenter] postNotificationName:@"DDAnnotationCoordinateDidChangeNotification" object:currentLocation];
-	//[currentLocation release];
-
     geocoder.delegate = self;
     [geocoder start];
 }
+
 - (void)locationManager:(CLLocationManager *)manager 
        didFailWithError:(NSError *)error {
     
@@ -338,9 +228,12 @@
     [alert release];
     [manager release];
 }
+
+
 #pragma mark -
 #pragma mark Alert View Delegate Methods
 -(void) promptForUsernamePassword {
+    
 if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	UIAlertView *prompt = [[UIAlertView alloc] initWithTitle:@"Please choose a username and password" 
 													 message:@"\n\n\n" // IMPORTANT
@@ -377,7 +270,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 #pragma mark -
 #pragma mark Reverse Geocoder Delegate Methods
 - (void)reverseGeocoder:(MKReverseGeocoder *)geocoder didFailWithError:(NSError *)error {
-	NSLog(@"WE FUCKING FAILED TO REVERSE GEOCODE!!");
+    
+	NSLog(@"WE FAILED TO REVERSE GEOCODE!!");
 	MapLocation *annotation = [[[MapLocation alloc] init] autorelease];
 	annotation.streetNumber = @"undetermined";
     annotation.streetAddress = @"undetermined";
@@ -402,6 +296,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
     geocoder.delegate = nil;
     [geocoder autorelease];
 }
+
+
 - (void)reverseGeocoder:(MKReverseGeocoder *)geocoder didFindPlacemark:(MKPlacemark *)placemark {
 	
 
@@ -414,13 +310,6 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
     annotation.streetAddress = placemark.thoroughfare;
     annotation.city = placemark.locality;
 	
-	
-	
-	
-	
-	
-	
-
 	NSString *state = [self.states valueForKey:placemark.administrativeArea];
 	
 	if (state) 
@@ -430,47 +319,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
     
 	//annotation.zip = placemark.postalCode;
     annotation.coordinate = geocoder.coordinate;
-	NSLog(@"CALLING SET ANOTATOION =============================================> ");
 	[self setAnnotation:annotation];
 	
-/*	
-	CLLocationCoordinate2D parkingSpace;
-	NSMutableDictionary *dict;
-	
-	for (dict in self->sharedUser.availableParking) {
-		parkingSpace.latitude = [[dict valueForKey:@"latitude"] floatValue];
-		parkingSpace.longitude = [[dict valueForKey:@"longitude"] floatValue];
-		
-		if ((parkingSpace.latitude == annotation.coordinate.latitude) && 
-			(parkingSpace.longitude == annotation.coordinate.longitude)) {
-			NSString *title = [dict valueForKey:@"userid"];
-			NSString *points = [dict valueForKey:@"points"];
-			annotation.title = [NSString stringWithFormat:@"%@ - %@",title,points];
-			//annotation.title = [dict valueForKey:@"userid"];
-			NSString *streetNumber =  annotation.streetNumber;
-			if ([streetNumber length] == 0) {
-				NSLog(@"Got streetNumber of length zero .....");
-				streetNumber = @"undetermined";
-			}
-			NSString *location = [NSString stringWithFormat:@"%@ %@, %@",streetNumber,annotation.streetAddress,annotation.state];
-			NSLog(@"location = %@",location);
-			[dict setObject:location forKey:@"location"];
-			NSLog(@"in didfindplacemark, if parkingspace, lat, long == annotation, lat, long, userid = %@", annotation.title);
-			break;
-		}
-	}
-		
-	DDAnnotationView *annotationView = [[DDAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"Pin"];
-	if ([self->sharedUser.status isEqualToString:@"U"]) {
-		annotationView.pinColor = MKPinAnnotationColorRed;
-	}
-		
-    [mapView addAnnotation:annotationView.annotation];
-	[self removeFromMap];
-    
-    [annotationView release];
-	[annotation release];
-*/  
     geocoder.delegate = nil;
     [geocoder autorelease];
 }
@@ -713,78 +563,62 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 
 -(void) getAvailableParking {
 	
-	NSLog(@"In GET AVAILABLE PARKING");
 	NSLog(@"upon entering getAvailableParking Aavailable spots: %d",[self->sharedUser.availableParking count]);
-	
-	
 	
 	CLLocationCoordinate2D parkingSpace;
 	NSMutableDictionary *dict;
 	
 	[self getDistances];
 	
-	float latitude = self->sharedUser.location.coordinate.latitude;
-	float longitude = self->sharedUser.location.coordinate.longitude;
-	
+	//float latitude = self->sharedUser.location.coordinate.latitude;
+	//float longitude = self->sharedUser.location.coordinate.longitude;
+    
+	// necessary to test in simulator
+    float latitude = 40.720221;
+    float longitude = -73.84535200000001;
+    // necessary to test in simulator
+    
+    
 	NSLog(@"before looping through available parking number of annotations = %d",[self.mapView.annotations count]);
-	
-	 	
-	
 	if (self->sharedUser.availableParking) {
 		NSLog(@"Number of available spots in VIEW WILL APPEAR: %d",[self->sharedUser.availableParking count]);
 		for (dict in self->sharedUser.availableParking) {
 			parkingSpace.latitude = [[dict valueForKey:@"latitude"] floatValue];
 			parkingSpace.longitude = [[dict valueForKey:@"longitude"] floatValue];
+            
 			NSLog(@"userid = [%@]",[dict valueForKey:@"userid"]);
 			NSLog(@"parkingSpace.latitude = %f",parkingSpace.latitude);
 			NSLog(@"parkingSpace.longitude = %f",parkingSpace.longitude);
 			NSLog(@"updated-at = %@",[dict valueForKey:@"updated-at"]);
-			
 			NSLog(@"user.userName = [%@]",self->sharedUser.userName);
 			
 			if (![[dict valueForKey:@"userid"] isEqualToString:[self->sharedUser.userName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]]) {
-				
-							
 				MKReverseGeocoder *geocoder = [[MKReverseGeocoder alloc] initWithCoordinate:parkingSpace];
-				
 				geocoder.delegate =  self;			
 				[geocoder start];
-				
-				
-				//[self.mapView addAnnotation:sel.annotation];
-				NSLog(@"ADDED ANNOTATION IN viewWillAppear!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! with USERNAME = %@",[dict valueForKey:@"userid"]);
-				//[annotation release];
 			} else {
 				NSLog(@"found a dictionary entry with username swhirsch");
-			
-		}
+            }
 			[points setTitle:[dict valueForKey:@"points"] forState:UIControlStateNormal];
 
-	}
+        }
 	}
 	
-	//[self->sharedUser.availableParking removeAllObjects];
-	NSLog(@"After removeAllObjects available spots: %d",[self->sharedUser.availableParking count]);
-	
-	MKCoordinateRegion region;
-	//region.center.latitude = (latitude + 0,05 + latitude) / 2;
-	//region.center.longitude = (longitude + 0.05 + longitude) / 2;
+    MKCoordinateRegion region;
 	region.center.latitude = latitude;
 	region.center.longitude = longitude;
 	region.span.latitudeDelta = 0.03;
 	region.span.longitudeDelta = 0.01;
 	
 	[mapView setRegion:region animated:YES];
-				[mapView regionThatFits:region];
-	//[mapView setDelegate:self];
-	//[mapView addSubview:self];	
+    [mapView regionThatFits:region];
+	
 	self->sharedUser.didRequestParkingRefresh = NO;
 	
 	
 }	
 
 - (void) getDistances {
-	NSLog(@"\nWE ARE CALCULATING THE FUCKING DISTANCES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	
 	CLLocation *parkingSpace = self->sharedUser.location;
 	NSMutableDictionary *dict;
@@ -792,9 +626,13 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	
 	
 	NSMutableDictionary *parking;
-	float userLatitude = parkingSpace.coordinate.latitude;
-	float userLongitude = parkingSpace.coordinate.longitude;
-	
+	//float userLatitude = parkingSpace.coordinate.latitude;
+	//float userLongitude = parkingSpace.coordinate.longitude;
+    
+    // for simulator testing
+    float userLatitude = 40.720221;
+    float userLongitude = -73.84535200000001;
+	// for simulator testing
 	
 	for (parking in self->sharedUser.availableParking) {
 		if ([[parking valueForKey:@"userid"]  isEqualToString:self->sharedUser.userName]) {
@@ -813,13 +651,10 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 			NSNumber *distance = [NSNumber numberWithFloat:miles];
 			[parking setValue:distance forKey:@"distance"];
 			NSLog(@"DISTANCE IN MILES FROM %@ IS %f",[parking valueForKey:@"userid"],miles);
-			NSLog(@"in getDistances, got username = %@",[parking valueForKey:@"userid"]);
+			NSLog(@"in %s, got username = %@",__FUNCTION__,[parking valueForKey:@"userid"]);
 			
 		}
-		   NSLog(@"in GET DISTANCES User Latitude = %f, and user longitude = %f",userLatitude,userLongitude);
-	}
-	for (parking in self->sharedUser.availableParking) {
-		NSLog(@"DISTANCE = %@",[parking valueForKey:@"distance"]);
+		   NSLog(@"in %s User Latitude = %f, and user longitude = %f",__FUNCTION__, userLatitude,userLongitude);
 	}
 	
 	NSSortDescriptor *milesSorter = [[NSSortDescriptor alloc] initWithKey:@"distance" ascending:YES];
@@ -828,9 +663,6 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	 for (parking in self->sharedUser.availableParking) {
 		 NSLog(@"AFTER SORTING DISTANCE = %@",[parking valueForKey:@"distance"]);
 	 }
-	 
-
-
 }
 
 -(CLLocationCoordinate2D) getSavedLocation {
@@ -851,8 +683,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 }
 
 +(void) getParkedCars:(MKMapView *)mapView {
-	NSLog(@"called getParkedCars");
-	NSLog(@"in getyParkedCars, number of annotations = %d",[mapView.annotations count]);
+	
+	NSLog(@"in %s, number of annotations = %d",__FUNCTION__,[mapView.annotations count]);
 
 	NSMutableArray *parkedLocation = [NSMutableArray array];
 	User *user = [User sharedManager];
@@ -879,8 +711,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	CLLocationDegrees longitude = [[NSUserDefaults standardUserDefaults ] floatForKey:@"longitude"];
 	
 	NSMutableString *url = [NSMutableString stringWithString:LOCATIONS_URL];
-	[url appendFormat:@"?latitude=%F&longitude=%F&userid=%@",sharedUser.location.coordinate.latitude,sharedUser.location.coordinate.longitude,sharedUser.userName];
-	
+	//[url appendFormat:@"?latitude=%F&longitude=%F&userid=%@",sharedUser.location.coordinate.latitude,sharedUser.location.coordinate.longitude,sharedUser.userName];
+	[url appendFormat:@"?latitude=%F&longitude=%F&userid=%@",40.720221,-73.84535200000001,sharedUser.userName];  // needed to test on simulator
 	NSLog(@"url = %@",url);
 	
 	ParkingSpots *parkingSpots = [[ParkingSpots alloc] initWithLocationsURL:url];
@@ -957,7 +789,6 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 		//spaceDetails.view = [[UITableView alloc] init];
 		
 		spaceDetails.title = [NSString stringWithFormat:@"%@ details",self->sharedUser.userName];
-		//spaceDetails.title = @"Fuck You, Baby!!";
 		[self.navigationController pushViewController:spaceDetails
 										 animated:YES];
 	} else {
@@ -966,7 +797,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 }
 
 -(IBAction) refreshLocation {
-	NSLog(@"called refreshLocation");
+	NSLog(@"in %s",__FUNCTION__);
 	self->sharedUser.didRequestRefresh = YES;
 	NSLog(@"did request refresh = %d",self->sharedUser.didRequestRefresh);
 	
@@ -1007,41 +838,28 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	
 	NSDictionary *parking;
 	for (parking in self->sharedUser.availableParking) 
-		NSLog(@"IN REFRESH PARKING THIS USER WAS FOUND IN AVAILABLE PARKING <=====> %@",[parking valueForKey:@"userid"]);
-			 [self->sharedUser.availableParking removeAllObjects];
-	NSLog(@"NUMBER OF ANNOTATIONS IN REFRESHPARKING = %d",[self.mapView.annotations count]);
+		NSLog(@"IN %s THIS USER WAS FOUND IN AVAILABLE PARKING <=====> %@",__FUNCTION__,[parking valueForKey:@"userid"]);
+    
+    [self->sharedUser.availableParking removeAllObjects];
+	NSLog(@"NUMBER OF ANNOTATIONS IN %s = %d",__FUNCTION__,[self.mapView.annotations count]);
 	DDAnnotation *theAnnotation = [self.mapView.annotations objectAtIndex:0];
 	NSLog(@"and the annotation title is %@",theAnnotation.title);
+    
 	[self removeParkingAnnotations];
 	[MapMeViewController getLocations];
+    
 	NSLog(@"number of avaiable parking spaces = %d",[self->sharedUser.availableParking count]);
 	
 }
 -(IBAction) preferences {
 	NSLog(@"Selected info button");
 	
-//PreferencesViewController *controller = [[[PreferencesViewController alloc] init] autorelease];
-	//SpaceDetailsView *controller = [[[SpaceDetailsView alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
 	Settings *controller = [[[Settings alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
 
-	//PreferencesViewController *controller = [[[PreferencesViewController alloc] initWithAppDelegate:self] autorelease];
-	
-	//PreferencesViewController *controller = [[PreferencesViewController alloc] initWithStyle:UITableViewStyleGrouped];
-	UINavigationController *secondNavigationController =
-    [[UINavigationController alloc] initWithRootViewController:controller];
-	//secondNavigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
-	
+    UINavigationController *secondNavigationController = [[UINavigationController alloc] initWithRootViewController:controller];
 	secondNavigationController.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
 	
-	//controller.delegate = self;
-	//navigationController = [ [ UINavigationController alloc] initWithRootViewController:controller];
-	//navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
 	
-	//UIBarButtonItem *done = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)] autorelease];
-	//self.navigationItem.rightBarButtonItem = done;
-	
-	//controller.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
-	//controller.delegate = self;
 	UIBarButtonItem *done = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleBordered target:self action:@selector(done)];
 	UIBarButtonItem *add = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:controller action:@selector(addSection)];
 	
@@ -1053,55 +871,36 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	[segmentedControl insertSegmentWithTitle:@"add" atIndex:1 animated:YES];
 	[segmentedControl addTarget:controller action:@selector(addSection:) forControlEvents:UIControlEventValueChanged];
 
-	//UIBarButtonItem *segmented = [[UIBarButtonItem alloc] initWithCustomView:[[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:@"Yes",@"NO",nil]]];
-	UIBarButtonItem *segmented = [[UIBarButtonItem alloc] initWithCustomView:segmentedControl];
-	//done.style = UIBarButtonItemStyleDone;
-	
-	//controller.navigationItem.rightBarButtonItem = add;
+    UIBarButtonItem *segmented = [[UIBarButtonItem alloc] initWithCustomView:segmentedControl];	
 	controller.navigationItem.rightBarButtonItem = segmented;
-	
 	controller.navigationItem.leftBarButtonItem = done;
 	controller.title = @"Settings";
 	[self  presentModalViewController:secondNavigationController animated:YES];
 	[add release];
 	[done release];
 	[secondNavigationController release];
-	//controller.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
-	//[self presentModalViewController:controller animated:YES];
-	
-	
 	
 }
 
 
-- (void)preferencesViewControllerDidFinish:(PreferencesViewController *)controller {
-    
-	
-	[self dismissModalViewControllerAnimated:YES];
-	
-	
-}
+
 
 
 - (IBAction)done {
 	
 	[self dismissModalViewControllerAnimated:YES];
-	//[self setPreferences];
 	
-	//[self.delegate preferencesViewControllerDidFinish:self];	
 }
 
 - (void) userExistsInDatabase {
-	User *user = [User sharedManager];
-	NSLog(@"called userExistsInDatabase");
+	
 	NSString *URLstr = @"http://74.72.89.23:3000/user";
-	//if (user.put_url) 
-	//	URLstr = user.put_url;
+	
 	NSMutableString *url = [NSMutableString stringWithString:URLstr];
 	
-	[url appendFormat:@"?userid=%@",user.userName];
+	[url appendFormat:@"?userid=%@",self->sharedUser.userName];
 	
-	NSLog(@"inm userExistsInDatabase, user name = %@ and url = %@",user.userName,url);
+	NSLog(@"in %s, user name = %@ and url = %@",__FUNCTION__,self->sharedUser.userName,url);
 	NSURL *theURL = [NSURL URLWithString:url];
 
 	NSMutableURLRequest *theRequest = [NSMutableURLRequest requestWithURL:theURL cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10.0];
@@ -1121,15 +920,11 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 		
 }
 -(void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-	NSLog(@"did we get here???????????????????????????");
 	NSHTTPURLResponse *HTTPResponse = (NSHTTPURLResponse *)response;
 	NSInteger statusCode = [HTTPResponse statusCode];
 	
 	if (404 == statusCode || 500 == statusCode) {
-		//[self.controller setTitle:@"Error Getting Parking Spot ....."];
-		[[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:FALSE];
-		NSLog(@"GOT A 'FUCKED' STATUS CODE");
-		
+		[[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:FALSE];		
 		[connection cancel];
 		NSLog(@"Server Error - %@", [NSHTTPURLResponse localizedStringForStatusCode:statusCode]);
 	} else if (200 == statusCode) {
@@ -1140,8 +935,7 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 }
 
 -(void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-		//[_responseData appendData:data];
-	//NSLog(@"response data is: %@",_responseData);
+		
 	NSString *sdata = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
 	NSLog(@"data recieved is: [%@]",sdata);
 	NSString *regexString = @"<id type=\"integer\">(\\d+)</id>";
@@ -1153,18 +947,11 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 		self->sharedUser.put_url = put_url;
 
 	}
-		NSLog(@"The data is: %@",sdata); 
-	//NSString *put_url = [[NSString alloc] initWithFormat:@"http://74.72.90.178:3000/locations/%@.xml",row];
-
+    NSLog(@"The data is: %@",sdata); 
 
 }
 
 -(void) connectionDidFinishLoading:(NSURLConnection *)connection {
-	
-	
-		//NSLog(@"response data from user query is %@",_responseData);
-		//[self parseLocations:_responseData];
-		//[_responseData release];
 	
 	[connection release];
 	
@@ -1176,19 +963,17 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 	
 	User *user = [User sharedManager];
 	
-	NSLog(@"in CLICKEDCUTTONATINDEX");
+	NSLog(@"in %s",__FUNCTION__);
 	if (buttonIndex == alertView.firstOtherButtonIndex) {
 		if ([self.userNameTextField.text length] != 0) {
-        [[NSUserDefaults standardUserDefaults] setObject:self.userNameTextField.text forKey:@"Username"];
-		[[NSUserDefaults standardUserDefaults] setObject:self.passwordTextField.text forKey:@"Password"];
-		self->sharedUser.userName = self.userNameTextField.text;
-		self->sharedUser.password = self.passwordTextField.text;
-		[alertView dismissWithClickedButtonIndex:buttonIndex animated:YES];
+            [[NSUserDefaults standardUserDefaults] setObject:self.userNameTextField.text forKey:@"Username"];
+            [[NSUserDefaults standardUserDefaults] setObject:self.passwordTextField.text forKey:@"Password"];
+            self->sharedUser.userName = self.userNameTextField.text;
+            self->sharedUser.password = self.passwordTextField.text;
+            [alertView dismissWithClickedButtonIndex:buttonIndex animated:YES];
 		} else {
-			[self promptForUsernamePassword];
+            [self promptForUsernamePassword];
 		}
-
-		
     }
 	
 }
@@ -1206,8 +991,8 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 			NSString *title = [dict valueForKey:@"userid"];
 			NSString *points = [dict valueForKey:@"points"];
 			annotation.title = [NSString stringWithFormat:@"%@ - %@",title,points];
-			//annotation.title = [dict valueForKey:@"userid"];
 			NSString *streetNumber =  annotation.streetNumber;
+            
 			if ([streetNumber length] == 0) {
 				NSLog(@"Got streetNumber of length zero .....");
 				streetNumber = @"undetermined";
@@ -1215,33 +1000,9 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 			NSString *location = [NSString stringWithFormat:@"%@ %@, %@",streetNumber,annotation.streetAddress,annotation.state];
 			NSLog(@"location = %@",location);
 			[dict setObject:location forKey:@"location"];
-			NSLog(@"in didfindplacemark, if parkingspace, lat, long == annotation, lat, long, userid = %@", annotation.title);
 			break;
 		}
 	}
-	/*
-	 if ((self->sharedUser.currentLocation.coordinate.latitude == annotation.coordinate.latitude) && 
-	 (self->sharedUser.currentLocation.coordinate.longitude == annotation.coordinate.longitude)) {
-	 self->sharedUser.currentLocation = annotation;
-	 }
-	 */
-	
-	if (([mapView.annotations count] != 0) && (self->sharedUser.didRequestRefresh == YES)) {
-		//self->sharedUser.didRequestRefresh = NO;
-		
-		/*
-		 MapLocation *removeFromMap;
-		 for (MapLocation *location in mapView.annotations) {
-		 if ((location.coordinate.latitude == self->sharedUser.currentLocation.coordinate.latitude) &&
-		 (location.coordinate.longitude == self->sharedUser.currentLocation.coordinate.longitude)) {
-		 removeFromMap = location;
-		 break;
-		 }
-		 }
-		 [mapView removeAnnotation:removeFromMap];
-		 */
-	}
-	//[self.mapView removeAnnotation:self->sharedUser.currentLocation];
 	
 	DDAnnotationView *annotationView = [[DDAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"Pin"];
 	if ([self->sharedUser.status isEqualToString:@"U"]) {
@@ -1263,8 +1024,6 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 -(void)registerDeviceWithParkingServer: (NSNotification *)notification {
 
 
-
-	
 	NSString *URLstr = DEVICES_URL;
 	NSURL *theURL = [NSURL URLWithString:URLstr];
 	NSMutableString *fuckThis = [NSMutableString stringWithString: [self->sharedUser.devToken description]];
@@ -1293,13 +1052,66 @@ if ( [allTrim( self->sharedUser.userName ) length] == 0 ) {
 		[[NSUserDefaults standardUserDefaults] setObject:self->sharedUser.udid forKey:@"devID"];
 		_responseData = [[NSMutableData data] retain ];
 		
-		
 	}
 	
 	
-	
-	
-	
-	
 }
+
+- (IBAction)findMe {
+	
+	self->sharedUser.parked = NO;
+	NSLog(@"in findMe self->shared.status = %@",self->sharedUser.status);
+    lm = [[CLLocationManager alloc] init];
+    lm.delegate = self;
+    lm.desiredAccuracy = kCLLocationAccuracyBest;
+    [lm startUpdatingLocation];
+    
+	activityIndicator.hidden = NO;
+	
+	
+	activityIndicator.hidesWhenStopped = YES;
+	[activityIndicator startAnimating];
+	[self.view addSubview:activityIndicator];
+    
+    progressLabel.text = NSLocalizedString(@"Determining Current Location", @"Determining Current Location");
+    
+    button.hidden = YES;
+	self->sharedUser.findMeCalled = YES;
+}
+
+- (void)openCallout:(id<MKAnnotation>)annotation {
+	
+	NSLog(@"##################################### in openCallOut");
+	NSLog(@"did request location refresh = %d",self->sharedUser.didRequestRefresh);
+	
+	[activityIndicator stopAnimating];
+	
+		progressLabel.text = [annotation subtitle];
+	if (!(self->sharedUser.userName == nil))  {
+        if ([[annotation title] hasPrefix:self->sharedUser.userName]) {
+            self->sharedUser.selectedStreetAddress = [annotation subtitle];
+            self->sharedUser.address = [annotation subtitle];
+        }
+	}
+	
+	UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 20)];
+	//[label setFont:[UIFont boldSystemFontOfSize:16.0]];
+	[label setFont:[UIFont fontWithName:@"HiraKakuProN-W6" size:12]];
+	[label setBackgroundColor:[UIColor clearColor]];
+	[label setTextColor:[UIColor whiteColor]];
+	[label setText:[annotation subtitle]];
+	[label setTextAlignment:UITextAlignmentCenter];
+	[self.navigationController.navigationBar.topItem setTitleView:label];
+	[label release];
+	
+	//self.title = [annotation subtitle];
+	toolBar.translucent = YES;
+	toolBar.hidden = NO;
+	//progressLabel.text = NSLocalizedString(@"Showing Annotation",@"Showing Annotation");
+    [mapView selectAnnotation:annotation animated:YES];
+	if (self->sharedUser.didRequestRefresh == YES)
+		self->sharedUser.didRequestRefresh = NO;
+    
+}
+
 @end
